@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 
 public class IterativeParallelism implements ListIP {
 
+  /**
+   * Splits fullList into equal subLists.
+   * @return mapped values according to function
+   */
   private <T, R> List<R> runInParallel(int threadNumber, Function<List<? extends T>, R> function,
       List<? extends T> fullList) {
     List<RunnableWithResult<T, R>> customRunnableList = new ArrayList<>();
@@ -68,16 +72,14 @@ public class IterativeParallelism implements ListIP {
   }
 
   @Override
-  public <T> boolean all(int threadNumber, List<? extends T> fullList, Predicate<? super T> predicate)
-      throws InterruptedException {
+  public <T> boolean all(int threadNumber, List<? extends T> fullList, Predicate<? super T> predicate) {
     Function<List<? extends T>, Boolean> function = (subList) -> subList.stream().allMatch(predicate);
 
     return runInParallel(threadNumber, function, fullList).stream().allMatch((e) -> e);
   }
 
   @Override
-  public <T> boolean any(int threadNumber, List<? extends T> fullList, Predicate<? super T> predicate)
-      throws InterruptedException {
+  public <T> boolean any(int threadNumber, List<? extends T> fullList, Predicate<? super T> predicate) {
     Function<List<? extends T>, Boolean> function = (subList) -> subList.stream().anyMatch(predicate);
 
     return runInParallel(threadNumber, function, fullList).stream().anyMatch((e) -> e);
@@ -100,7 +102,6 @@ public class IterativeParallelism implements ListIP {
     return runInParallel(threadNumber, function, fullList)
         .stream()
         .flatMap(Collection::stream)
-//        .filter(predicate)
         .collect(toList());
   }
 
@@ -108,7 +109,7 @@ public class IterativeParallelism implements ListIP {
   public <T, U> List<U> map(int threadNumber, List<? extends T> fullList, Function<? super T, ? extends U> mapFunction) {
     Function<List<? extends T>, List<? super T>> function = (subList) -> subList.stream().map(mapFunction).collect(toList());
 
-    return (List<U>)runInParallel(threadNumber, function, fullList)
+    return (List<U>) runInParallel(threadNumber, function, fullList)
         .stream()
         .flatMap(Collection::stream)
         .collect(toList());

@@ -9,7 +9,7 @@ class RunnableWithResult<T, R> implements Runnable {
   private final List<? extends T> list;
   private R result;
 
-  public RunnableWithResult(Function<List<? extends T>, R> function, List<? extends T> list) {
+  RunnableWithResult(Function<List<? extends T>, R> function, List<? extends T> list) {
     this.function = function;
     this.list = list;
   }
@@ -19,7 +19,7 @@ class RunnableWithResult<T, R> implements Runnable {
     result = function.apply(list);
   }
 
-  public R getResult() {
+  R getResult() {
     return result;
   }
 }
