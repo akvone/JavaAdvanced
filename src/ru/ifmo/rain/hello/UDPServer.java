@@ -5,21 +5,19 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class UDPServer {
+class UDPServer extends UDPCore {
 
   private final int threadNumber;
   private final ExecutorService executorService;
-  private final DatagramSocket socket;
 
   UDPServer(int port, int threadNumber) throws SocketException {
+    super(new DatagramSocket(port));
     this.threadNumber = threadNumber;
     executorService = Executors.newFixedThreadPool(threadNumber);
-    socket = new DatagramSocket(port);
   }
 
   void start() {
@@ -55,16 +53,4 @@ class UDPServer {
     }
   }
 
-  private DatagramPacket receivePacket() throws IOException {
-    int bufferSize = socket.getReceiveBufferSize();
-    DatagramPacket reqPacket = new DatagramPacket(new byte[bufferSize], bufferSize);
-    socket.receive(reqPacket);
-    return reqPacket;
-  }
-
-  private void sendPacket(SocketAddress socketAddress, String respContent) throws IOException {
-    byte[] respBytes = respContent.getBytes();
-    DatagramPacket respPacket = new DatagramPacket(respBytes, respBytes.length, socketAddress);
-    socket.send(respPacket);
-  }
 }
