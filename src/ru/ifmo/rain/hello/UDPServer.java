@@ -9,13 +9,14 @@ import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-class UDPServer extends UDPCore {
+class UDPServer {
 
   private final int threadNumber;
   private final ExecutorService executorService;
+  private final UDPCore udpCore;
 
   UDPServer(int port, int threadNumber) throws SocketException {
-    super(new DatagramSocket(port));
+    udpCore = new UDPCore(new DatagramSocket(port));
     this.threadNumber = threadNumber;
     executorService = Executors.newFixedThreadPool(threadNumber);
   }
@@ -37,16 +38,17 @@ class UDPServer extends UDPCore {
     } catch (InterruptedException e) {
       System.err.println("Stop operation has been interrupted");
     }
-    socket.close();
+
+    udpCore.close();
   }
 
   private void receiveAndSend() {
     while (!Thread.interrupted()) {
       try {
-        DatagramPacket reqPacket = receivePacket();
+        DatagramPacket reqPacket = udpCore.receivePacket();
         String reqContent = new String(reqPacket.getData(), reqPacket.getOffset(), reqPacket.getLength());
         String respContent = "Hello, " + reqContent;
-        sendPacket(reqPacket.getSocketAddress(), respContent);
+        udpCore.sendPacket(reqPacket.getSocketAddress(), respContent);
       } catch (IOException e) {
         System.err.println(e.getMessage());
       }
