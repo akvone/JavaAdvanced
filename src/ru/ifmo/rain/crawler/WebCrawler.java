@@ -10,8 +10,6 @@ public class WebCrawler implements Crawler {
 
 
   private final Downloader downloader;
-  private final int downloadersNumber;
-  private final int extractorsNumber;
   private final int perHost;
 
   private final ExecutorService downloadersPool;
@@ -19,26 +17,21 @@ public class WebCrawler implements Crawler {
 
   public WebCrawler(Downloader downloader, int downloadersNumber, int extractorsNumber, int perHost) {
     this.downloader = downloader;
-    this.downloadersNumber = downloadersNumber;
     downloadersPool = Executors.newFixedThreadPool(1);
-    this.extractorsNumber = extractorsNumber;
     extractorsPool = Executors.newFixedThreadPool(1);
     this.perHost = perHost;
   }
 
-
+  private WebCrawlerTask webCrawlerTask;
 
   @Override
   public Result download(String url, int depth) {
-     WebCrawlerTask webCrawlerTask;
-    webCrawlerTask = new WebCrawlerTask(url, depth, downloader,
-        downloadersPool,
-        extractorsPool);
+    webCrawlerTask = new WebCrawlerTask(url, depth, downloader, downloadersPool, extractorsPool);
     return webCrawlerTask.download();
   }
 
   @Override
   public void close() {
-//    webCrawlerTask.close();
+    webCrawlerTask.close();
   }
 }

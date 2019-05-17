@@ -8,7 +8,6 @@ import info.kgeorgiy.java.advanced.crawler.Document;
 import info.kgeorgiy.java.advanced.crawler.Downloader;
 import info.kgeorgiy.java.advanced.crawler.Result;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,10 +23,7 @@ public class WebCrawlerTask {
   private final ExecutorService extractorsPool;
   private final ExecutorService downloadersPool;
 
-  private Map<String, Boolean> downloaded = new ConcurrentHashMap<>();
-  private Map<String, IOException> errors = new HashMap<>();
-
-  private Map<String, IOException> rawResult = new HashMap<>();
+  private Map<String, DownloadResult> rawResult = new ConcurrentHashMap<>();
 
   private Phaser phaser;
 
@@ -49,14 +45,14 @@ public class WebCrawlerTask {
     return prepareResult(rawResult);
   }
 
-  private Result prepareResult(Map<String, IOException> rawResult) {
+  private Result prepareResult(Map<String, DownloadResult> rawResult) {
     var list = rawResult.entrySet().stream()
-        .filter(e -> e.getValue() == null)
+        .filter(e -> e.getValue().isNoError())
         .map(Entry::getKey)
         .collect(toList());
     var errors = rawResult.entrySet().stream()
-        .filter(e -> e.getValue() != null)
-        .collect(toMap(Entry::getKey, Entry::getValue));
+        .filter(e -> e.getValue().isError())
+        .collect(toMap(Entry::getKey, e -> e.getValue().getException()));
 
     return new Result(list, errors);
   }
@@ -71,9 +67,9 @@ public class WebCrawlerTask {
   }
 
   private void submitTask(ExecutorService executorService, SpecialRunnable r) {
+    syncPlus();
     executorService.submit(() -> {
       try {
-        syncPlus();
         r.run();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -103,9 +99,9 @@ public class WebCrawlerTask {
             if (currentTaskDepth + 1 <= maxDepth) {
               submitTask(new ExtractorTask(document, currentTaskDepth + 1));
             }
-            return null;
+            return new DownloadResult(null);
           } catch (IOException e) {
-            return e;
+            return new DownloadResult(e);
           }
         });
       }
@@ -124,9 +120,9 @@ public class WebCrawlerTask {
   }
 
   public void close() {
-//    downloadersPool.shutdownNow();
-//    extractorsPool.shutdownNow();
-//    phaser.forceTermination(); // TODO
+    downloadersPool.shutdownNow();
+    extractorsPool.shutdownNow();
+    phaser.forceTermination(); // TODO
   }
 
 }
