@@ -89,22 +89,20 @@ public class WebCrawlerTask {
 
   private void downloadNext(DownloadTask task) {
     int currentTaskDepth = task.getDepth();
-    if (currentTaskDepth <= maxDepth) {
-      for (String url : task.getUrls()) {
-        rawResult.computeIfAbsent(url, s -> {
-          try {
-            System.out.println("Try to load " + url);
-            Document document = downloader.download(url);
+    for (String url : task.getUrls()) {
+      rawResult.computeIfAbsent(url, s -> {
+        try {
+          System.out.println("Try to load " + url);
+          Document document = downloader.download(url);
 
-            if (currentTaskDepth + 1 <= maxDepth) {
-              submitTask(new ExtractorTask(document, currentTaskDepth + 1));
-            }
-            return new DownloadResult(null);
-          } catch (IOException e) {
-            return new DownloadResult(e);
+          if (currentTaskDepth + 1 <= maxDepth) {
+            submitTask(new ExtractorTask(document, currentTaskDepth + 1));
           }
-        });
-      }
+          return new DownloadResult(null);
+        } catch (IOException e) {
+          return new DownloadResult(e);
+        }
+      });
     }
   }
 
@@ -120,9 +118,9 @@ public class WebCrawlerTask {
   }
 
   public void close() {
-    downloadersPool.shutdownNow();
-    extractorsPool.shutdownNow();
-    phaser.forceTermination(); // TODO
+//    downloadersPool.shutdownNow();
+//    extractorsPool.shutdownNow();
+//    phaser.forceTermination(); // TODO
   }
 
 }

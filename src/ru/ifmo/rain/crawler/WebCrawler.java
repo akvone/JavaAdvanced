@@ -17,8 +17,8 @@ public class WebCrawler implements Crawler {
 
   public WebCrawler(Downloader downloader, int downloadersNumber, int extractorsNumber, int perHost) {
     this.downloader = downloader;
-    downloadersPool = Executors.newFixedThreadPool(1);
-    extractorsPool = Executors.newFixedThreadPool(1);
+    downloadersPool = Executors.newFixedThreadPool(Math.min(downloadersNumber, 100));
+    extractorsPool = Executors.newFixedThreadPool(Math.min(downloadersNumber, 100));
     this.perHost = perHost;
   }
 
@@ -26,6 +26,9 @@ public class WebCrawler implements Crawler {
 
   @Override
   public Result download(String url, int depth) {
+    if (depth < 1){
+      throw new IllegalArgumentException();
+    }
     webCrawlerTask = new WebCrawlerTask(url, depth, downloader, downloadersPool, extractorsPool);
     return webCrawlerTask.download();
   }
