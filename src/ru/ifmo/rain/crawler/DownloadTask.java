@@ -1,19 +1,17 @@
 package ru.ifmo.rain.crawler;
 
-import java.util.List;
-
 class DownloadTask {
 
-  private final List<String> urls;
+  private final String url;
   private final int depth;
 
-  DownloadTask(List<String> urls, int depth) {
-    this.urls = urls;
+  DownloadTask(String url, int depth) {
+    this.url = url;
     this.depth = depth;
   }
 
-  public List<String> getUrls() {
-    return urls;
+  public String getUrl() {
+    return url;
   }
 
   public int getDepth() {

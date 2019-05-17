@@ -1,6 +1,5 @@
 package ru.ifmo.rain.crawler;
 
-import static java.util.List.of;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -18,28 +17,29 @@ import java.util.concurrent.Phaser;
 public class WebCrawlerTask {
 
   private final int maxDepth;
-  private final String url;
+  private final String rootUrl;
   private final Downloader downloader;
-  private final ExecutorService extractorsPool;
   private final ExecutorService downloadersPool;
+  private final ExecutorService extractorsPool;
 
   private Map<String, DownloadResult> rawResult = new ConcurrentHashMap<>();
 
   private Phaser phaser;
 
-  public WebCrawlerTask(String url, int maxDepth, Downloader downloader,
+  public WebCrawlerTask(String rootUrl, int maxDepth, Downloader downloader,
       ExecutorService downloadersPool, ExecutorService extractorsPool) {
 
     this.maxDepth = maxDepth;
-    this.url = url;
+    this.rootUrl = rootUrl;
     this.downloader = downloader;
-    this.extractorsPool = extractorsPool;
     this.downloadersPool = downloadersPool;
+    this.extractorsPool = extractorsPool;
   }
 
   public Result download() {
+    System.out.println("Start download. Url " + rootUrl + ", depth " + maxDepth);
     phaser = new Phaser(1);
-    submitTask(new DownloadTask(of(url), 1));
+    submitTask(new DownloadTask(rootUrl, 1));
     phaser.arriveAndAwaitAdvance();
 
     return prepareResult(rawResult);
@@ -73,6 +73,8 @@ public class WebCrawlerTask {
         r.run();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
+      } catch (Throwable t) {
+        t.printStackTrace();
       } finally {
         syncMinus();
       }
@@ -89,21 +91,23 @@ public class WebCrawlerTask {
 
   private void downloadNext(DownloadTask task) {
     int currentTaskDepth = task.getDepth();
-    for (String url : task.getUrls()) {
-      rawResult.computeIfAbsent(url, s -> {
-        try {
-          System.out.println("Try to load " + url);
-          Document document = downloader.download(url);
+    String url = task.getUrl();
+    rawResult.computeIfAbsent(url, s -> {
+      try {
+        System.out.println("Try to load [" + currentTaskDepth + "] " + url);
+        Document document = downloader.download(url);
 
-          if (currentTaskDepth + 1 <= maxDepth) {
-            submitTask(new ExtractorTask(document, currentTaskDepth + 1));
-          }
-          return new DownloadResult(null);
-        } catch (IOException e) {
-          return new DownloadResult(e);
+        if (currentTaskDepth + 1 <= maxDepth) {
+          submitTask(new ExtractorTask(document, currentTaskDepth + 1));
         }
-      });
-    }
+        return new DownloadResult(null);
+      } catch (IOException e) {
+        return new DownloadResult(e);
+      } catch (Throwable t) {
+        t.printStackTrace();
+        return null;
+      }
+    });
   }
 
   private void extractNext(ExtractorTask task) {
@@ -111,9 +115,13 @@ public class WebCrawlerTask {
       System.out.println("Try to extract from next document ");
 
       List<String> urls = task.getDocument().extractLinks();
-      submitTask(new DownloadTask(urls, task.getDepthToSet()));
+      for (String url : urls) {
+        submitTask(new DownloadTask(url, task.getDepthToSet()));
+      }
     } catch (IOException e) {
       Thread.currentThread().interrupt();
+    } catch (Throwable t) {
+      t.printStackTrace();
     }
   }
 

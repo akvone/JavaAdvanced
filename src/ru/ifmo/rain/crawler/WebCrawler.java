@@ -18,7 +18,7 @@ public class WebCrawler implements Crawler {
   public WebCrawler(Downloader downloader, int downloadersNumber, int extractorsNumber, int perHost) {
     this.downloader = downloader;
     downloadersPool = Executors.newFixedThreadPool(Math.min(downloadersNumber, 100));
-    extractorsPool = Executors.newFixedThreadPool(Math.min(downloadersNumber, 100));
+    extractorsPool = Executors.newFixedThreadPool(Math.min(extractorsNumber, 100));
     this.perHost = perHost;
   }
 
