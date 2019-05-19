@@ -18,7 +18,7 @@ public class IterativeParallelism implements ListIP {
    * Splits fullList into equal subLists.
    * @return mapped values according to function
    */
-  private <T, R> List<R> runInParallel(int threadNumber, Function<List<? extends T>, R> function,
+  protected <T, R> List<R> runInParallel(int threadNumber, Function<List<? extends T>, R> function,
       List<? extends T> fullList) {
     List<RunnableWithResult<T, R>> customRunnableList = new ArrayList<>();
     int size = fullList.size();
