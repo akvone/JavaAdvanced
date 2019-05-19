@@ -5,10 +5,12 @@ import info.kgeorgiy.java.advanced.crawler.Document;
 class ExtractorTask {
 
   private final Document document;
+  private final String from;
   private final int depthToSet;
 
-  ExtractorTask(Document document, int depthToSet) {
+  ExtractorTask(Document document, String from, int depthToSet) {
     this.document = document;
+    this.from = from;
     this.depthToSet = depthToSet;
   }
 
@@ -18,5 +20,9 @@ class ExtractorTask {
 
   public int getDepthToSet() {
     return depthToSet;
+  }
+
+  public String getFrom() {
+    return from;
   }
 }

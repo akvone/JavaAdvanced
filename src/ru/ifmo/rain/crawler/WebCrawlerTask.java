@@ -37,9 +37,9 @@ public class WebCrawlerTask {
   }
 
   public Result download() {
-    System.out.println("Start download. Url " + rootUrl + ", depth " + maxDepth);
+    log("Start downloading. Url " + rootUrl + ", depth " + maxDepth);
     phaser = new Phaser(1);
-    submitTask(new DownloadTask(rootUrl, 1));
+    submitTask(new DownloadTask("", rootUrl, 1));
     phaser.arriveAndAwaitAdvance();
 
     return prepareResult(rawResult);
@@ -59,11 +59,23 @@ public class WebCrawlerTask {
 
 
   private void submitTask(ExtractorTask extractorTask) {
-    submitTask(extractorsPool, () -> extractNext(extractorTask));
+    submitTask(extractorsPool, () -> {
+      try {
+        extractNext(extractorTask);
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    });
   }
 
   private void submitTask(DownloadTask downloadTask) {
-    submitTask(downloadersPool, () -> downloadNext(downloadTask));
+    submitTask(downloadersPool, () -> {
+      try {
+        downloadNext(downloadTask);
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    });
   }
 
   private void submitTask(ExecutorService executorService, SpecialRunnable r) {
@@ -94,11 +106,11 @@ public class WebCrawlerTask {
     String url = task.getUrl();
     rawResult.computeIfAbsent(url, s -> {
       try {
-        System.out.println("Try to load [" + currentTaskDepth + "] " + url);
+        log("Try to load [" + currentTaskDepth + "] " + task.getFrom() + " -> " + url);
         Document document = downloader.download(url);
 
         if (currentTaskDepth + 1 <= maxDepth) {
-          submitTask(new ExtractorTask(document, currentTaskDepth + 1));
+          submitTask(new ExtractorTask(document, url, currentTaskDepth + 1));
         }
         return new DownloadResult(null);
       } catch (IOException e) {
@@ -110,13 +122,18 @@ public class WebCrawlerTask {
     });
   }
 
+  public void log(String message) {
+    System.out.println(message);
+  }
+
   private void extractNext(ExtractorTask task) {
     try {
-      System.out.println("Try to extract from next document ");
+      log("Try to extract from next document ");
 
       List<String> urls = task.getDocument().extractLinks();
       for (String url : urls) {
-        submitTask(new DownloadTask(url, task.getDepthToSet()));
+        log("Got this to load " + url);
+        submitTask(new DownloadTask(task.getFrom(), url, task.getDepthToSet()));
       }
     } catch (IOException e) {
       Thread.currentThread().interrupt();
