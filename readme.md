@@ -1,5 +1,6 @@
 <h2> Completed tasks:
 
+* 1 (walk) - hard
 * 3 (student) - hard
 * 4 (implementor) - simple
 * 7 (concurrent) - hard
