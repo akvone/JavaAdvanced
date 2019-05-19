@@ -1,4 +1,6 @@
-<h2> Completed tasks:
+Task implementation for [this course](https://www.kgeorgiy.info/git/geo/java-advanced-2019)
+
+Completed tasks:
 
 * 1 (walk) - hard
 * 3 (student) - hard
